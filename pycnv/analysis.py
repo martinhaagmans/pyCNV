@@ -207,9 +207,10 @@ def get_annot_bedlocation(capture, pipelinedir=None):
     return bed_annot
 
 
-def add_docfile(docfile, capture, name):
-    doc = doc_to_df(docfile)
-    Databases(capture).add_docdf(doc, name)
+def add_docfile(docfile, capture, serie, sample):
+    D = Databases(capture)
+    data = D.parse_docfile(docfile)
+    D.add_data_to_db(sample, serie, data)
 
 
 def drop_badsamples(df, badsamples):
@@ -320,7 +321,7 @@ def get_gene_list(genefile):
 def analyze(args):
     if args.nieuw:
         check_docinput(args)
-        add_docfile(args.nieuw, args.capture, args.serie)
+        add_docfile(args.nieuw, args.capture, args.serie, args.sample)
         if args.addonly:
             sys.exit()
 

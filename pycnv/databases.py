@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
+import csv
 import sqlite3
 import math
 import json
@@ -26,17 +27,6 @@ class Databases:
         self.conn = sqlite3.connect('{}/{}'.format(self.dir, self.dbgeneral))
         self.capconn = sqlite3.connect('{}/{}.sqlite'
                                        .format(self.dir, self.capture))
-
-
-    def get_doc_table_names(self):
-        sql = """SELECT name FROM sqlite_master
-        WHERE type='table'
-        """
-        c = self.capconn.cursor()
-        c.execute(sql)
-        names = [val for tup in c.fetchall()
-                 for val in tup if 'annot' not in val]
-        return names
 
     def get_archive(self):
         """Get coveragedata from table and return df"""
@@ -68,6 +58,29 @@ class Databases:
         df = df.transpose().set_index(['serie', 'sample']).sort_index().sort_index(axis=1)
         return df
 
+    @staticmethod
+    def parse_docfile(docfile):
+        target_coverage = list()
+        with open(docfile) as f:
+            fin = csv.reader(f, delimiter='\t')
+            header = next(fin)
+            for line in fin:
+                target, total, mean, *_ = line
+                target_coverage.append((target, mean))
+        return target_coverage
+
+    def add_data_to_db(self, sample, serie, data):
+        sql = """INSERT INTO {}
+        (SAMPLE, SERIE, DATA)
+        VALUES ('{}', '{}', '{}')
+        """.format(self.capture.lower(), sample, serie, json.dumps(data))
+        c = self.capconn.cursor()
+        try:
+            c.execute(sql)
+        except sqlite3.IntegrityError as e:
+            print(e)
+        else:
+            self.capconn.commit()
 
     def create_badregiontable(self):
         sql = """CREATE TABLE IF NOT EXISTS {}
@@ -193,34 +206,6 @@ class Databases:
                 except sqlite3.IntegrityError as e:
                     print(e)
         self.conn.commit()
-
-    def get_doc_table_names(self):
-        sql = """SELECT name FROM sqlite_master
-        WHERE type='table'
-        """
-        c = self.capconn.cursor()
-        c.execute(sql)
-        names = [val for tup in c.fetchall()
-                 for val in tup if 'annot' not in val]
-        return names
-
-    # def get_archive(self):
-    #     """Get coveragedata from table and return df"""
-    #     tables = self.get_doc_table_names()
-    #     dfcollect = []
-    #     for name in tables:
-    #         sql = "SELECT * FROM {}".format(name)
-    #         try:
-    #             df = pd.read_sql(sql, self.capconn,
-    #                              index_col=['serie', 'sample'])
-    #         except pd.io.sql.DatabaseError as e:
-    #             print(e)
-    #             sys.exit()
-    #         else:
-    #             dfcollect.append(df)
-    #     dfout = pd.concat(dfcollect, axis=1)
-    #     dfout.sort_index(inplace=True)
-    #     return dfout
 
     def get_bad_samples(self):
         """Get badsample ID's from table and return a list."""
