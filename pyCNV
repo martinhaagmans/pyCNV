@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+import pycnv
+
+def main():
+    args = pycnv.get_arguments()
+
+    if args.todo == 'create':
+        pycnv.create_database(args)
+    elif args.todo == 'analyze':
+        pycnv.analyze(args)
+
+
+if __name__ == '__main__':
+    main()
