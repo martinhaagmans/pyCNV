@@ -66,6 +66,8 @@ class Databases:
             header = next(fin)
             for line in fin:
                 target, total, mean, *_ = line
+                target = target.replace(':', '_')
+                target = target.replace('-', '_')
                 target_coverage.append((target, mean))
         return target_coverage
 
