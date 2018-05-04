@@ -317,6 +317,29 @@ class Databases:
                             .format(cap, i)) for i in poscons[cap]]
             conn.close()
 
+        def remove(sample=None, serie=None):
+            if sample and serie is None:
+                sql = '''DELETE FROM {}
+                WHERE SAMPLE='{}'
+                '''.format(self.capture.lower(), sample)
+
+            elif serie and sample is None:
+                sql = '''DELETE FROM {}
+                WHERE SERIE='{}'
+                '''.format(self.capture.lower(), serie)
+
+            elif sample and serie:
+                sql = '''DELETE FROM {}
+                WHERE (SAMPLE='{}' AND SERIE='{}')
+                '''.format(self.capture.lower(), sample, serie)
+
+            elif sample is None and serie is None:
+                raise ValueError('Geen sample en/of serie opgegeven')
+
+            c = self.capconn.cursor()
+            c.execute(checksql)
+            self.capconn.commit()
+
 
 class UpdateDatabase(object):
 

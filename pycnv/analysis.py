@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import pandas as pd
-import argparse
 import os
 import sys
+
+import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
 from .databases import Databases
@@ -127,48 +127,6 @@ def percentage_callable(df, badregions):
     badregions[['start', 'end']] = badregions[['start', 'end']].apply(pd.to_numeric)
     badregions['size'] = badregions['end'] - badregions['start']
     return (badregions['size'].sum() / df['size'].sum())
-
-
-def get_arguments():
-    """Parse arguments and return Namespace object."""
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--todo", choices=['analyze', 'create'],
-                        default="analyze", required=True)
-    parser.add_argument("-b", "--bed", type=str, metavar='',
-                        help="BED file geannoteerd met GEN")
-    parser.add_argument("-g", "--genelist", type=str, metavar='',
-                        help="File met gennamen voor rapport typeA-test")
-    parser.add_argument("-p", "--poscontroles", type=str, metavar='',
-                        help=("TSV File met positieve controles: "
-                              "Capture Gen Dnummer Dup/Del"))
-    parser.add_argument("-i", "--ingestuurd", type=str, metavar='',
-                        help=("TSV File met ingestuurde samples: "
-                              "Serie Dnumm Code"))
-    parser.add_argument("-c", "--capture", type=str, metavar='',
-                        help=("Code van de capture als"
-                              " in de versiebeheerlijst"))
-    parser.add_argument("-n", "--nieuw", type=str, metavar='',
-                        help=("Nieuwe sample interval summary"
-                              " file om te beoordelen"))
-    parser.add_argument("-s", "--serie", type=str, metavar='',
-                        help="Serie bijv. Serie110 of SerieDL012")
-    parser.add_argument("-o", "--output", type=str, metavar='',
-                        help="Output directory. Vervangt config.py")
-    parser.add_argument("--sample", type=str, metavar='',
-                        help="Sample ID")
-    parser.add_argument('--addonly', action='store_true',
-                        help='Add DoC to database only', )
-
-    return parser.parse_args()
-
-
-def check_docinput(args):
-    if not args.capture:
-        raise NameError('Geef capture op voor analyse DoC --capture')
-    elif not args.serie:
-        raise NameError('Geef serie op voor analyse DoC --serie')
 
 
 def create_database(args):
@@ -296,11 +254,11 @@ def sort_by_interval(df):
     return df
 
 
-def create_dirs(args, outdir):
-    if args.output is not None:
-        newdir = outdir
-    elif args.output is None:
-        newdir = os.path.join(outdir, args.capture, args.serie)
+def create_dirs(output, capture, serie, outdir):
+    if output is not None:
+        newdir = output
+    elif output is None:
+        newdir = os.path.join(outdir, capture, serie)
     newperpatcalls = os.path.join(newdir, 'Calls')
     newperpatqc = os.path.join(newdir, 'QC')
     PATHS = [newdir, newperpatcalls, newperpatqc]
@@ -318,18 +276,18 @@ def get_gene_list(genefile):
         return [line.strip() for line in f]
 
 
-def analyze(args):
-    if args.nieuw:
-        check_docinput(args)
-        add_docfile(args.nieuw, args.capture, args.serie, args.sample)
-        if args.addonly:
+def analyze(capture, serie, docfile=None, sample=None,
+            outdir=None, genelist=None, addonly=False):
+    if docfile:
+        add_docfile(docfile, capture, serie, sample)
+        if addonly:
             sys.exit()
 
-    df = collect_archive(args.capture, correctmales=True)
+    df = collect_archive(capture, correctmales=True)
 
-    df_new, df_archive = seperate_data(df, args.serie, args.sample)
+    df_new, df_archive = seperate_data(df, serie, sample)
 
-    df_archive, df_poscons = clean_archive(df_archive, args.capture,
+    df_archive, df_poscons = clean_archive(df_archive, capture,
                                            getposcondf=True)
 
     archtargetmean, archtargetstd = get_target_info(df_archive.transpose())
@@ -354,12 +312,12 @@ def analyze(args):
              df_poscons.transpose()[sample]))[sample] for sample in samples],
             axis=1)
 
-    if args.sample:
-        samples = args.sample
+    if sample:
+        samples = sample
         zscores_sample = get_zscore_df(df_archive.transpose().join(
-            df_new.transpose()))[args.sample]
+            df_new.transpose()))[sample]
 
-    elif args.serie and not args.sample:
+    elif serie and not sample:
         samples = df_new.index
         zscores_sample = pd.concat(
             [get_zscore_df(df_archive.transpose().join(
@@ -373,19 +331,19 @@ def analyze(args):
     elif df_poscons.empty:
         data = zscore_archive.join(zscores_sample)
 
-    QD = Databases(args.capture)
+    QD = Databases(capture)
     poscons = QD.get_positive_controls_dict()
     badsamples = QD.get_bad_samples()
     annot = QD.get_annot()
     empiricalfragments = QD.get_regions_to_exclude()
     config = get_config_dict('{}/config.py'.format(
         os.path.dirname(os.path.abspath(__file__))))
-    if not args.output:
-        outdir = config['outputdir']
-    elif args.output:
-        outdir = args.output
 
-    newdir = create_dirs(args, outdir)
+    if not outdir:
+        outdir = config['outputdir']
+        newdir = create_dirs(None, capture, serie, outdir)
+    elif outdir:
+        newdir = create_dirs(outdir, capture, serie, outdir)
 
     with open('{}/archive.txt'.format(newdir), 'w') as f:
         [f.write('{}\n'.format(sample))
@@ -414,14 +372,14 @@ def analyze(args):
     dfnewmean, dfnewstd = get_target_info(dfclean)
     dfarchmean, dfarchstd = get_target_info(df_archive.transpose())
 
-    pdf = PdfPages('{}/{}.pdf'.format(newdir, args.serie))
-    Plotter = SeriePlots(args.capture, args.serie, pdf)
+    pdf = PdfPages('{}/{}.pdf'.format(newdir, serie))
+    Plotter = SeriePlots(capture, serie, pdf)
 
     Plotter.plot_qc_serie(dfnewmean.join(dfnewstd),
                           dfarchmean.join(dfarchstd),
                           len(df_archive.index))
     pdf.close()
-    print('{} QC done'.format(args.serie))
+    print('{} QC done'.format(serie))
 
     for i, sample in enumerate(samples):
         df_new_norm = normalize_df(df_new.loc[sample])
@@ -438,8 +396,10 @@ def analyze(args):
         calls = data[(data[sample] < -3) | (data[sample] > 3)]
 
         if len(calls.index) != 0:
-            if args.genelist:
-                reportgenes = get_gene_list(args.genelist)
+            if isinstance(genelist, list):
+                reportgenes = list(genelist)
+            else:
+                 reportgenes = get_gene_list(genelist)
             calls = calls.transpose()
             calls_per_target = {target: '{}/{}'.format(
                                 len(calls[(calls[target] > 3) |
@@ -459,7 +419,7 @@ def analyze(args):
                                                                     sample))
 
             for gene in genes:
-                if args.genelist:
+                if genelist:
                     if gene not in reportgenes:
                         continue
                 intervalstoplot = get_intervals_for_gene(annot, gene)
