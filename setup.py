@@ -11,13 +11,5 @@ setup(name='pyCNV',
       url='www.github.com/zaag/pyCNV',
       license='MIT',
       scripts=['pyCNV'],
-      install_requires=[
-          'numpy', 'matplotlib', 'seaborn', 'pandas'
-      ],
+      install_requires=['numpy', 'matplotlib', 'seaborn', 'pandas'],
       )
-      
-      
-
-
-
-

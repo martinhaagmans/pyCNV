@@ -3,9 +3,9 @@ import sys
 import os
 import csv
 import sqlite3
-import math
 import json
 import pandas as pd
+
 
 class Databases:
 
@@ -63,7 +63,7 @@ class Databases:
         target_coverage = list()
         with open(docfile) as f:
             fin = csv.reader(f, delimiter='\t')
-            header = next(fin)
+            _ = next(fin)
             for line in fin:
                 target, total, mean, *_ = line
                 target = target.replace(':', '_')
@@ -91,6 +91,9 @@ class Databases:
         gen text NOT NULL,
         PRIMARY KEY(capture, target))
         """.format(self.badregiontable)
+        c = self.conn.cursor()
+        c.execute(sql)
+        self.conn.commit()
 
     def get_regions_to_exclude(self):
         c = self.conn.cursor()
@@ -147,7 +150,6 @@ class Databases:
         c = self.capconn.cursor()
         c.execute(sql)
         self.capconn.commit()
-
 
     def add_poscontrols(self, inputfile):
         """Add poscontroles from file to table"""
@@ -268,7 +270,6 @@ class Databases:
             poscons = {sample: gene for (sample, gene) in c.fetchall()}
             return poscons
 
-
     def get_annot(self):
         """Get annotation(target-gene) from table and return a df."""
         sql = "SELECT * FROM {}annot".format(self.capture)
@@ -337,7 +338,7 @@ class Databases:
                 raise ValueError('Geen sample en/of serie opgegeven')
 
             c = self.capconn.cursor()
-            c.execute(checksql)
+            c.execute(sql)
             self.capconn.commit()
 
 

@@ -9,6 +9,7 @@ from .databases import Databases
 from .plots import SeriePlots
 from .plots import SamplePlots
 
+
 def doc_to_df(docfile):
     """Read GATK's DoC file and return a df."""
     df = pd.read_csv(docfile, index_col=0, sep='\t')
@@ -55,6 +56,7 @@ def remove_underscore_targets(targets):
     targets = targets.str.replace('_', '-', 1)
     return targets
 
+
 def normalize_df(df, correctsex=True):
     """Get ratio target_coverage/average_coverage for each target for each
     patient. Return dataframe.
@@ -87,6 +89,7 @@ def get_zscore_df(df):
     zscore = zscore.div(targetstd.transpose().iloc[0], axis=1).transpose()
     return zscore.round(1)
 
+
 def correct_males(df, cutoff=0.85):
     """Calculate ratio X-chromosome coverage and Autosomal coverage and
     double the coverage on the X-chromosome if ratio < cutoff.
@@ -112,8 +115,8 @@ def get_bad_regions(df, meancutoff=0.2, stdcutoff=0.15):
     targetmean, targetstd = get_target_info(df)
     excluded_std = targetstd[targetstd['Std'] >= stdcutoff]
     excluded_mean = targetmean[targetmean['Mean'] <= meancutoff]
-    excluded_regions = pd.concat([excluded_mean,
-                                 excluded_std], axis=1).fillna('OK')
+    excluded_regions = pd.concat([excluded_mean, excluded_std],
+                                 axis=1).fillna('OK')
     return(excluded_regions)
 
 
@@ -271,6 +274,7 @@ def get_config_dict(configfile):
     exec(open(configfile).read(), config)
     return config
 
+
 def get_gene_list(genefile):
     with open(genefile, 'r') as f:
         return [line.strip() for line in f]
@@ -399,12 +403,10 @@ def analyze(capture, serie, docfile=None, sample=None,
             if isinstance(genelist, list):
                 reportgenes = list(genelist)
             else:
-                 reportgenes = get_gene_list(genelist)
+                reportgenes = get_gene_list(genelist)
             calls = calls.transpose()
-            calls_per_target = {target: '{}/{}'.format(
-                                len(calls[(calls[target] > 3) |
-                                    (calls[target] < -3)][target]),
-                                len(calls[target]))
+            calls_per_target = {target: '{}/{}'.format(len(calls[(calls[target] > 3) | (calls[target] < -3)][target]),
+                                                       len(calls[target]))
                                 for target in calls}
 
             calls = calls.transpose()
@@ -415,8 +417,7 @@ def analyze(capture, serie, docfile=None, sample=None,
             calls.columns = ['Z-score', 'Gen', 'Freq', 'Mean', 'Std']
             calls.index = remove_underscore_targets(calls.index)
             calls.to_csv('{}/Calls/{}.txt'.format(newdir, sample), sep='\t')
-            samplepdf = PdfPages('{}/Calls/{}.pdf'.format(newdir,
-                                                                    sample))
+            samplepdf = PdfPages('{}/Calls/{}.pdf'.format(newdir, sample))
 
             for gene in genes:
                 if genelist:

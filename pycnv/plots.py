@@ -4,9 +4,9 @@ import math
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from collections import OrderedDict
 
 sns.set_style('darkgrid')
+
 
 class SeriePlots(object):
 
@@ -82,7 +82,6 @@ class SamplePlots(object):
                 ax.scatter(x, y, label=g, color='grey')
                 print(e, i)
 
-
         if len(genes) > 100:
             ax.legend(ncol=2, loc='center left', fontsize=2)
         else:
@@ -107,7 +106,7 @@ class SamplePlots(object):
             plt.title(self.sample, size=15)
         fig.tight_layout()
         plt.savefig('{}/QC/{}.png'.format(self.outdir, self.sample),
-                                          dpi=80)
+                    dpi=80)
         plt.close()
 
     def plot_cnv_calls(self, data, gene, pdf, targetinfo, poscons=[]):
