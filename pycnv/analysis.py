@@ -402,10 +402,10 @@ def analyze(capture, serie, docfile=None, sample=None,
         if len(calls.index) != 0:
             if genelist is None:
                 genelist = False
-            elif isinstance(genelist, list):
-                reportgenes = list(genelist)
-            else:
-                reportgenes = get_gene_list(genelist)
+            # elif isinstance(genelist, list):
+            #     reportgenes = list(genelist)
+            # else:
+            #     reportgenes = get_gene_list(genelist)
             calls = calls.transpose()
             calls_per_target = {target: '{}/{}'.format(len(calls[(calls[target] > 3) | (calls[target] < -3)][target]),
                                                        len(calls[target]))
