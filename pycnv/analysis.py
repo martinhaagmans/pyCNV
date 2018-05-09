@@ -400,7 +400,9 @@ def analyze(capture, serie, docfile=None, sample=None,
         calls = data[(data[sample] < -3) | (data[sample] > 3)]
 
         if len(calls.index) != 0:
-            if isinstance(genelist, list):
+            if genelist is None:
+                genelist = False
+            elif isinstance(genelist, list):
                 reportgenes = list(genelist)
             else:
                 reportgenes = get_gene_list(genelist)
