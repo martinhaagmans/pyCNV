@@ -137,8 +137,10 @@ def create_database(args):
         DB = Databases('')
         if args.poscontroles:
             DB.add_poscontrols(args.poscontroles)
+            sys.exit()
         if args.ingestuurd:
             DB.add_badsamples(args.ingestuurd)
+            sys.exit()
     if args.capture:
         create_capture_database(args.capture)
 
