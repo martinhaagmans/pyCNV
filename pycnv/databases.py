@@ -143,7 +143,7 @@ class Databases:
         """Create a table with 1 column per capture-target."""
         sql = '''CREATE TABLE IF NOT EXISTS {}
         (SAMPLE TEXT NOT NULL,
-        SERIE INT NOT NULL,
+        SERIE TEXT NOT NULL,
         DATA TEXT NOT NULL,
         PRIMARY KEY(SAMPLE, SERIE))
         '''.format(self.capture.lower())
