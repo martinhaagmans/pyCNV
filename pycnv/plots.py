@@ -58,7 +58,7 @@ class SamplePlots(object):
         if self.sample not in badsamples:
             self.badsample = False
 
-    def sample_qc(self, df):
+    def sample_qc(self, df, serie):
         axmax = list()
         axmin = list()
 
@@ -71,8 +71,9 @@ class SamplePlots(object):
 
         for i, g in enumerate(genes):
             intervalstoplot = df[df['gen'] == g]
+            
             x = list(intervalstoplot['Mean'].values)
-            y = list(intervalstoplot[self.sample].values)
+            y = list(intervalstoplot[(serie, self.sample)].values)
             axmax.append(max(x+y))
             axmin.append(min(x+y))
 
@@ -109,7 +110,7 @@ class SamplePlots(object):
                     dpi=80)
         plt.close()
 
-    def plot_cnv_calls(self, data, gene, pdf, targetinfo, poscons=[]):
+    def plot_cnv_calls(self, data, gene, pdf, targetinfo, serie, poscons=[]):
 
         fig = plt.figure(figsize=(12, 9))
         ax = plt.subplot2grid((8, 1), (0, 0), rowspan=4)
@@ -120,7 +121,7 @@ class SamplePlots(object):
             y = data[pat].values
             x = np.arange(1, len(y) + 1, 1.0)
 
-            if pat == self.sample:
+            if pat == (serie, self.sample):
                 if self.badsample:
                     ax.plot(x, y, 'ro', markersize=8,
                             label='{}\nnonarchive'.format(pat))

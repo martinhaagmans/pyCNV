@@ -177,8 +177,13 @@ def add_docfile(docfile, capture, serie, sample):
 
 
 def drop_badsamples(df, badsamples):
-    drop = [i for i in badsamples if i in df.index.droplevel(0)]
-    dfclean = df.drop(drop, level=1)
+    try:
+        drop = [i for i in badsamples if i in df.index.droplevel(0)]
+        dfclean = df.drop(drop, level=1)
+    except AttributeError:
+        [df.drop(i, inplace=True) for i in badsamples if i in df.index]
+        dfclean = df
+
     return dfclean
 
 
@@ -210,7 +215,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
         archive = drop_badsamples(archive, badsamples)
     if pcsamples:
         df_poscons = get_poscondata(archive, pcsamples, keepseries=keepseries)
-        archive.drop(pcsamples, level=1, inplace=True)
+        # [archive.drop(_, level=1, inplace=True) for _ in pcsamples]
     else:
         df_poscons = pd.DataFrame()
     if not keepseries:
@@ -226,14 +231,19 @@ def seperate_data(df, new, sample=None, keepseries=False):
     Return 2 dataframes.
     """
     if sample is not None:
-        df_new = df.loc[new]
-        try:
-            df_new = df_new.loc[sample]
-        except KeyError:
-            print('Requested sample not in serie.')
-            raise
-        else:
-            df.drop([sample], level=1, inplace=True)
+        # df.index = df.index.droplevel(level=0)
+        df_new = df.loc[(new, sample)]
+
+        # print (df.index)
+        # sys.exit(0)
+
+        # try:
+        #     df_new = df_new.loc[sample]
+        # except KeyError:
+        #     print('Requested sample not in serie.')
+        #     raise
+        # else:
+        df.drop([sample], level=1, inplace=True)
     else:
         df_new = df.loc[new]
         df.drop([new], level=0, inplace=True)
@@ -351,11 +361,13 @@ def analyze(capture, serie, docfile=None, sample=None,
     elif outdir:
         newdir = create_dirs(outdir, capture, serie, outdir)
 
+    dfall = df_new.transpose().join(df_archive.transpose())
+
     with open('{}/archive.txt'.format(newdir), 'w') as f:
         [f.write('{}\n'.format(sample))
-         for sample in df_archive.index]
+         for sample in dfall.transpose().index]
 
-    badregions = get_bad_regions(df_archive.transpose())
+    badregions = get_bad_regions(dfall.transpose())
     badregions = badregions.join(annot)
 
     if not badregions.empty:
@@ -388,18 +400,36 @@ def analyze(capture, serie, docfile=None, sample=None,
     print('{} QC done'.format(serie))
 
     for i, sample in enumerate(samples):
-        df_new_norm = normalize_df(df_new.loc[sample])
+
+        df = collect_archive(capture, correctmales=True)
+
+        df_new, df_archive = seperate_data(df, serie, sample)
+
+        df_archive.index = df_archive.index.droplevel(0)
+
+        # df_new.index = df_new.index.droplevel(0)
+
+        df_archive, df_poscons = clean_archive(df_archive, capture,
+                                               getposcondf=True, keepseries=True)
+        archtargetmean, archtargetstd = get_target_info(df_archive.transpose())
+        zscores_sample = get_zscore_df(df_archive.transpose().join(df_new.transpose()))
+        zscores_sample = zscores_sample[(serie, sample)]
+
+        zscore_archive = get_zscore_df(df_archive.transpose())
+        df_new_norm = normalize_df(df_new)
         sampleplotdf = annot.join(archtargetmean.join(df_new_norm))
         SaPlotter = SamplePlots(sample, newdir, badsamples=badsamples)
-        SaPlotter.sample_qc(sampleplotdf)
+        SaPlotter.sample_qc(sampleplotdf, serie)
+        # print(zscores_sample)
         if not df_poscons.empty:
             data = zscores_poscons.join(
                 zscore_archive.join(zscores_sample[sample]))
 
+
         elif df_poscons.empty:
-            data = zscore_archive.join(zscores_sample[sample])
+            data = zscore_archive.join(zscores_sample)
         # data[(data < -3) | (data > 3)].to_csv('out.csv')
-        calls = data[(data[sample] < -3) | (data[sample] > 3)]
+        calls = data[(data[(serie,sample)] < -3) | (data[(serie,sample)] > 3)]
 
         if len(calls.index) != 0:
             if genelist is None:
@@ -416,7 +446,7 @@ def analyze(capture, serie, docfile=None, sample=None,
             calls = calls.transpose()
             calls = annot.join(calls, how='right')
             genes = calls['gen'].unique()
-            calls = calls[[sample, 'gen']].join(pd.DataFrame.from_dict(
+            calls = calls[[(serie, sample), 'gen']].join(pd.DataFrame.from_dict(
                 calls_per_target, orient='index')).join(badregions[['Mean', 'Std']]).fillna('OK')
             calls.columns = ['Z-score', 'Gen', 'Freq', 'Mean', 'Std']
             calls.index = remove_underscore_targets(calls.index)
@@ -434,7 +464,7 @@ def analyze(capture, serie, docfile=None, sample=None,
                                                              intervalstoplot)
                 targetinfo_toplot = sort_by_interval(targetinfo_toplot.copy())
                 SaPlotter.plot_cnv_calls(datatoplot, gene, samplepdf,
-                                         targetinfo_toplot, poscons)
+                                         targetinfo_toplot, serie, poscons)
 
             samplepdf.close()
         print('{} ({} of {}) done'.format(sample, i + 1, len(samples)))
