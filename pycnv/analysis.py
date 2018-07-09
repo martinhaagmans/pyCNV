@@ -215,7 +215,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
         archive = drop_badsamples(archive, badsamples)
     if pcsamples:
         df_poscons = get_poscondata(archive, pcsamples, keepseries=keepseries)
-        # [archive.drop(_, level=1, inplace=True) for _ in pcsamples]
+        [archive.drop(_, level=1, inplace=True) for _ in pcsamples]
     else:
         df_poscons = pd.DataFrame()
     if not keepseries:
@@ -325,7 +325,7 @@ def analyze(capture, serie, docfile=None, sample=None,
         samples = df_poscons.index
         zscores_poscons = pd.concat(
             [get_zscore_df(df_archive.transpose().join(
-             df_poscons.transpose()[sample]))[sample] for sample in samples],
+             df_poscons.transpose()[s]))[s] for s in samples],
             axis=1)
 
     if sample:
