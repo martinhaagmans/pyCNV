@@ -215,7 +215,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
         archive = drop_badsamples(archive, badsamples)
     if pcsamples:
         df_poscons = get_poscondata(archive, pcsamples, keepseries=keepseries)
-        [archive.drop(_, level=1, inplace=True) for _ in pcsamples]
+        [archive.drop(_, axis=1, inplace=True) for _ in pcsamples]
     else:
         df_poscons = pd.DataFrame()
     if not keepseries:
