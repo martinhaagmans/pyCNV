@@ -367,7 +367,7 @@ def analyze(capture, serie, docfile=None, sample=None,
         [f.write('{}\n'.format(sample))
          for sample in dfall.transpose().index]
 
-    badregions = get_bad_regions(dfall)
+    badregions = get_bad_regions()
     badregions = badregions.join(annot)
 
     if not badregions.empty:
