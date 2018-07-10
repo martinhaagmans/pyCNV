@@ -362,7 +362,7 @@ def analyze(capture, serie, docfile=None, sample=None,
         newdir = create_dirs(outdir, capture, serie, outdir)
 
     dfall = df_new.transpose().join(df_archive.transpose())
-
+    nrarchives = len(dfall.transpose().index)
     with open('{}/archive.txt'.format(newdir), 'w') as f:
         [f.write('{}\n'.format(sample))
          for sample in dfall.transpose().index]
@@ -395,7 +395,7 @@ def analyze(capture, serie, docfile=None, sample=None,
 
     Plotter.plot_qc_serie(dfnewmean.join(dfnewstd),
                           dfarchmean.join(dfarchstd),
-                          len(df_archive.index))
+                          nrarchives)
     pdf.close()
     print('{} QC done'.format(serie))
 
