@@ -44,7 +44,7 @@ class Databases:
             for tup in json.loads(data):
                 target, coverage = tup
                 d[sample]['data'][target] = coverage
-samples
+                
         dflist = list()
 
         for sample, data in d.items():
