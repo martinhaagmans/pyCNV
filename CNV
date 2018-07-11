@@ -38,6 +38,6 @@ if __name__ == '__main__':
     if args.create:
         pycnv.create_database(args)
     elif args.analyse:
-        pycnv.analyze(capture=args.capture, serie=args.serie, docfile=args.nieuw,
+        pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, genelist=args.genelist,
                       addonly=args.addonly)
