@@ -305,7 +305,6 @@ def analyze(capture, serie, docfile=None, sample=None,
 
     df_archive, df_poscons = clean_archive(df_archive, capture,
                                            getposcondf=True)
-
     archtargetmean, archtargetstd = get_target_info(df_archive.transpose())
     targetinfo = archtargetmean.join(archtargetstd)
 
@@ -328,7 +327,6 @@ def analyze(capture, serie, docfile=None, sample=None,
             [get_zscore_df(df_archive.transpose().join(
              df_poscons.transpose()[s]))[s] for s in samples],
             axis=1)
-
     if sample:
         samples = sample
         zscores_sample = get_zscore_df(df_archive.transpose().join(
@@ -464,6 +462,7 @@ def analyze(capture, serie, docfile=None, sample=None,
                 targetinfo_toplot = filter_data_by_intervals(targetinfo,
                                                              intervalstoplot)
                 targetinfo_toplot = sort_by_interval(targetinfo_toplot.copy())
+                print(poscons)
                 SaPlotter.plot_cnv_calls(datatoplot, gene, samplepdf,
                                          targetinfo_toplot, serie, poscons)
 
