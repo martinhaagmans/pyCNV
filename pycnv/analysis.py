@@ -116,7 +116,7 @@ def get_bad_regions(df, meancutoff=0.2, stdcutoff=0.15):
     excluded_std = targetstd[targetstd['Std'] >= stdcutoff]
     excluded_mean = targetmean[targetmean['Mean'] <= meancutoff]
     excluded_regions = pd.concat([excluded_mean, excluded_std],
-                                 axis=1).fillna('OK')
+                                 axis=1, sort=True).fillna('OK')
     return(excluded_regions)
 
 
@@ -215,7 +215,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
         archive = drop_badsamples(archive, badsamples)
     if pcsamples:
         df_poscons = get_poscondata(archive, pcsamples, keepseries=keepseries)
-        [archive.drop(_, axis=1, inplace=True) for _ in pcsamples]
+        [archive.drop(_, axis=1, inplace=True) for _ in pcsamples if _ in archive.columns]
     else:
         df_poscons = pd.DataFrame()
     if not keepseries:
@@ -323,6 +323,7 @@ def analyze(capture, serie, docfile=None, sample=None,
 
     if not df_poscons.empty:
         samples = df_poscons.index
+        [df_archive.drop(_, inplace=True) for _ in samples if _ in df_archive.index]
         zscores_poscons = pd.concat(
             [get_zscore_df(df_archive.transpose().join(
              df_poscons.transpose()[s]))[s] for s in samples],
@@ -407,6 +408,8 @@ def analyze(capture, serie, docfile=None, sample=None,
 
         df_archive.index = df_archive.index.droplevel(0)
 
+        [df_archive.drop(_, inplace=True) for _ in poscons.keys() if _ in df_archive.index]
+
         # df_new.index = df_new.index.droplevel(0)
 
         df_archive, df_poscons = clean_archive(df_archive, capture,
@@ -420,11 +423,9 @@ def analyze(capture, serie, docfile=None, sample=None,
         sampleplotdf = annot.join(archtargetmean.join(df_new_norm))
         SaPlotter = SamplePlots(sample, newdir, badsamples=badsamples)
         SaPlotter.sample_qc(sampleplotdf, serie)
-        # print(zscores_sample)
         if not df_poscons.empty:
             data = zscores_poscons.join(
-                zscore_archive.join(zscores_sample[sample]))
-
+                zscore_archive.join(zscores_sample))
 
         elif df_poscons.empty:
             data = zscore_archive.join(zscores_sample)

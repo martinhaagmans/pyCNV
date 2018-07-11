@@ -44,7 +44,7 @@ class Databases:
             for tup in json.loads(data):
                 target, coverage = tup
                 d[sample]['data'][target] = coverage
-
+samples
         dflist = list()
 
         for sample, data in d.items():
@@ -54,7 +54,7 @@ class Databases:
             dftmp = dftmp.transpose()
             dflist.append(dftmp)
 
-        df = pd.concat(dflist, axis=1)
+        df = pd.concat(dflist, axis=1, sort=True)
         df = df.transpose().set_index(['serie', 'sample']).sort_index().sort_index(axis=1)
         return df
 
