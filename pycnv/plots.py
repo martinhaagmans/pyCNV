@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import math
+
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -58,7 +59,7 @@ class SamplePlots(object):
         if self.sample not in badsamples:
             self.badsample = False
 
-    def sample_qc(self, df):
+    def sample_qc(self, df, serie):
         axmax = list()
         axmin = list()
 
@@ -71,6 +72,8 @@ class SamplePlots(object):
 
         for i, g in enumerate(genes):
             intervalstoplot = df[df['gen'] == g]
+            if intervalstoplot.empty:
+                continue
             x = list(intervalstoplot['Mean'].values)
             y = list(intervalstoplot[self.sample].values)
             axmax.append(max(x+y))
@@ -86,7 +89,6 @@ class SamplePlots(object):
             ax.legend(ncol=2, loc='center left', fontsize=2)
         else:
             ax.legend(ncol=2, loc='center left')
-
         axmax = math.ceil(max(axmax))
         axmin = math.floor(min(axmin))
 
@@ -106,11 +108,12 @@ class SamplePlots(object):
             plt.title(self.sample, size=15)
         fig.tight_layout()
         plt.savefig('{}/QC/{}.png'.format(self.outdir, self.sample),
-                    dpi=80)
+                    sample_qcdpi=80)
         plt.close()
 
-    def plot_cnv_calls(self, data, gene, pdf, targetinfo, poscons=[]):
-
+    def plot_cnv_calls(self, data, gene, pdf, targetinfo, serie, poscons=None):
+        if poscons is None:
+            poscons = dict()
         fig = plt.figure(figsize=(12, 9))
         ax = plt.subplot2grid((8, 1), (0, 0), rowspan=4)
         ax2 = plt.subplot2grid((8, 1), (4, 0), rowspan=2, sharex=ax)
@@ -126,7 +129,8 @@ class SamplePlots(object):
                             label='{}\nnonarchive'.format(pat))
                 elif not self.badsample:
                     ax.plot(x, y, 'ro', markersize=8, label=pat)
-
+            elif pat in serie:
+                ax.plot(x, y, 'bo', markersize=4)
             # Pos control AND correct gene => label = PosConDnr + Gene
             elif pat in poscons and gene in poscons[pat]:
                 ax.plot(x, y, '--', markersize=4, label=('PosCon'))
