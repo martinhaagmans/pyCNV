@@ -72,6 +72,8 @@ class SamplePlots(object):
 
         for i, g in enumerate(genes):
             intervalstoplot = df[df['gen'] == g]
+            if intervalstoplot.empty:
+                continue
             x = list(intervalstoplot['Mean'].values)
             y = list(intervalstoplot[self.sample].values)
             axmax.append(max(x+y))
