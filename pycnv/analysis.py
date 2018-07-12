@@ -417,9 +417,11 @@ def analyse(capture, serie, docfile=None, sample=None,
             df_poscon_zscore_list.append(zscores_temp[posconid])
 
         df_zscores_poscons = pd.concat(df_poscon_zscore_list, axis=1)
+        df_zscores_samples = get_zscore_df(df)
+        df_zscores = df_zscores_samples.join(df_zscores_poscons)
 
-    df_zscores_samples = get_zscore_df(df)
-    df_zscores = df_zscores_samples.join(df_zscores_poscons)
+    elif df_poscons.empty:
+        df_zscores = get_zscore_df(df)
 
     for i, sample in enumerate(serie_samples):
 
