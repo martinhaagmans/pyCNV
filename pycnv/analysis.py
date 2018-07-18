@@ -99,8 +99,8 @@ def correct_males(df, cutoff=0.85):
     sex = df[df.index.str.contains('^chrX', regex=True, na=False)]
     auto = df[~df.index.str.contains('^chrX', regex=True, na=False)]
     males = [x for x in df.columns
-             if (sex[sex[x] > 100][x].mean() /
-                 auto[auto[x] > 100][x].mean()) < cutoff]
+             if (sex[sex[x] > 100][x].mean()
+                 / auto[auto[x] > 100][x].mean()) < cutoff]
 
     for p in males:
         new = 2 * df[df.index.str.contains('^chrX', regex=True,
@@ -185,6 +185,7 @@ def drop_badsamples(df, badsampleIDs):
         dfclean = df
     return dfclean
 
+
 def drop_poscons(df, posconIDs):
     try:
         drop = [i for i in posconIDs if i in df.index.droplevel(0)]
@@ -194,9 +195,11 @@ def drop_poscons(df, posconIDs):
         dfclean = df
     return dfclean
 
+
 def get_samples_for_serie(df, serie):
     samples = list(df.loc[serie].index)
     return samples
+
 
 def get_poscondata(df, posconsamples):
     dfall = df.copy()
@@ -299,6 +302,7 @@ def get_config_dict(configfile):
 def get_gene_list_from_file(genefile):
     with open(genefile, 'r') as f:
         return [line.strip() for line in f]
+
 
 def serie_qc(capture, serie, outdir, poscons, badsamples):
     QD = Databases(capture)

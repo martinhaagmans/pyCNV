@@ -10,6 +10,6 @@ setup(name='pyCNV',
       packages=['pycnv'],
       url='www.github.com/zaag/pyCNV',
       license='MIT',
-      scripts=['pyCNV'],
+      scripts=['CNV'],
       install_requires=['numpy', 'matplotlib', 'seaborn', 'pandas'],
       )
