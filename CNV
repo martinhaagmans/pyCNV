@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--bed', type=str, metavar='',
                         help='BED file geannoteerd met GEN')
     parser.add_argument('-g', '--genelist', type=str, metavar='', nargs='*',
-                        help='File met gennamen voor rapport typeA-test')
+                        help='Lijst met gennamen voor rapportage')
     parser.add_argument('-p', '--poscontroles', type=str, metavar='',
                         help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
 
@@ -39,5 +39,5 @@ if __name__ == '__main__':
         pycnv.create_database(args)
     elif args.analyse:
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
-                      sample=args.sample, outdir=args.output, genelist=args.genelist,
+                      sample=args.sample, outdir=args.output, reportgenes=args.genelist,
                       addonly=args.addonly)

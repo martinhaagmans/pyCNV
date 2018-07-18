@@ -26,7 +26,7 @@ def annotbed_to_df(bedfile):
     dfannot = pd.read_csv(bedfile, header=None, sep='\t')
     try:
         dfannot.drop('strand', inplace=True, axis=1)
-    except ValueError:
+    except KeyError:
         pass
     if len(dfannot.columns) == 4:
         dfannot.columns = ['chromosome', 'start', 'end', 'Gen']
@@ -99,8 +99,8 @@ def correct_males(df, cutoff=0.85):
     sex = df[df.index.str.contains('^chrX', regex=True, na=False)]
     auto = df[~df.index.str.contains('^chrX', regex=True, na=False)]
     males = [x for x in df.columns
-             if (sex[sex[x] > 100][x].mean() /
-                 auto[auto[x] > 100][x].mean()) < cutoff]
+             if (sex[sex[x] > 100][x].mean()
+                 / auto[auto[x] > 100][x].mean()) < cutoff]
 
     for p in males:
         new = 2 * df[df.index.str.contains('^chrX', regex=True,
@@ -185,6 +185,7 @@ def drop_badsamples(df, badsampleIDs):
         dfclean = df
     return dfclean
 
+
 def drop_poscons(df, posconIDs):
     try:
         drop = [i for i in posconIDs if i in df.index.droplevel(0)]
@@ -194,9 +195,11 @@ def drop_poscons(df, posconIDs):
         dfclean = df
     return dfclean
 
+
 def get_samples_for_serie(df, serie):
     samples = list(df.loc[serie].index)
     return samples
+
 
 def get_poscondata(df, posconsamples):
     dfall = df.copy()
@@ -296,9 +299,10 @@ def get_config_dict(configfile):
     return config
 
 
-def get_gene_list(genefile):
+def get_gene_list_from_file(genefile):
     with open(genefile, 'r') as f:
         return [line.strip() for line in f]
+
 
 def serie_qc(capture, serie, outdir, poscons, badsamples):
     QD = Databases(capture)
@@ -354,7 +358,7 @@ def write_excluded_file(newdir, badregions, empiricalfragments, perc_callable):
 
 
 def analyse(capture, serie, docfile=None, sample=None,
-            outdir=None, genelist=None, addonly=False):
+            outdir=None, reportgenes=None, addonly=False):
     if docfile:
         add_docfile(docfile, capture, serie, sample)
         if addonly:
@@ -432,13 +436,6 @@ def analyse(capture, serie, docfile=None, sample=None,
         calls = df_zscores[(df_zscores[sample] < -3) | (df_zscores[sample] > 3)]
 
         if len(calls.index) != 0:
-            if genelist is None:
-                genelist = False
-            # elif isinstance(genelist, list):
-            #     reportgenes = list(genelist)
-            # else:
-            #     reportgenes = get_gene_list(genelist)
-
             calls = calls.transpose()
             calls_per_target = {target: '{}/{}'.format(len(calls[(calls[target] > 3) | (calls[target] < -3)][target]),
                                                        len(calls[target]))
@@ -448,16 +445,16 @@ def analyse(capture, serie, docfile=None, sample=None,
             calls = df_annot.join(calls, how='right')
             genes = calls['gen'].unique()
             calls = calls[[sample, 'gen']].join(pd.DataFrame.from_dict(
-                calls_per_target, orient='index')).join(badregions[['Mean', 'Std']]).fillna('OK')
+                calls_per_target, orient='index')
+                ).join(badregions[['Mean', 'Std']]).fillna('OK')
             calls.columns = ['Z-score', 'Gen', 'Freq', 'Mean', 'Std']
             calls.index = remove_underscore_targets(calls.index)
             calls.to_csv('{}/Calls/{}.txt'.format(newdir, sample), sep='\t')
             samplepdf = PdfPages('{}/Calls/{}.pdf'.format(newdir, sample))
 
             for gene in genes:
-                if genelist:
-                    if gene not in reportgenes:
-                        continue
+                if reportgenes is not None and gene not in reportgenes:
+                    continue
 
                 intervalstoplot = get_intervals_for_gene(df_annot, gene)
                 datatoplot = filter_data_by_intervals(df_zscores, intervalstoplot)

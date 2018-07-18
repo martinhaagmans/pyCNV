@@ -10,13 +10,16 @@ sns.set_style('darkgrid')
 
 
 class SeriePlots(object):
+    """Create QC plot per serie."""
 
     def __init__(self, capture, serie, pdf):
+        """Set capture, serie and PDF."""
         self.capture = capture
         self.serie = serie
         self.pdf = pdf
 
     def plot_qc_serie(self, df_new, df_arch, nrarchive=None):
+        """Plot mean serie vs mean archive and stddev serie and archive."""
         fig = plt.figure(figsize=(12, 9))
         ax = plt.subplot(211)
         plt.title('{} QC {}'.format(self.serie, self.capture),
