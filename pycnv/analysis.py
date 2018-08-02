@@ -394,13 +394,17 @@ def analyse(capture, serie, docfile=None, sample=None,
     except KeyError as e:
         df_poscons = pd.DataFrame()
         print(e)
+
+    df_clean = drop_badsamples(df, badsamples)
+    df_clean = df_clean.transpose()
+
     df = df.transpose()
     df_poscons = df_poscons.transpose()
 
-    target_mean, target_std = get_target_info(df)
+    target_mean, target_std = get_target_info(df_clean)
     target_info = target_mean.join(target_std)
 
-    all_samples = list(df.columns) + list(df_poscons.columns)
+    all_samples = list(df_clean.columns)
     write_archive_file(newdir, all_samples)
 
     badregions = get_bad_regions(target_info)
@@ -428,8 +432,9 @@ def analyse(capture, serie, docfile=None, sample=None,
         df_zscores = get_zscore_df(df)
 
     for i, sample in enumerate(serie_samples):
-
-        df_norm = normalize_df(df).transpose()
+        samples_to_drop = [_ for _ in badsamples if _ != sample]
+        df_temp = drop_badsamples(df.transpose(), samples_to_drop)
+        df_norm = normalize_df(df_temp).transpose()
         sampleplotdf = target_mean.join(df_norm.join(df_annot))
         SaPlotter = SamplePlots(sample, newdir, badsamples=badsamples)
         SaPlotter.sample_qc(sampleplotdf, serie)
