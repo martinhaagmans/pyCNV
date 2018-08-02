@@ -176,14 +176,13 @@ def add_docfile(docfile, capture, serie, sample):
     D.add_data_to_db(sample, serie, data)
 
 
-def drop_badsamples(df, badsampleIDs):
+def drop_badsamples(dfdrop, badsampleIDs):
     try:
-        drop = [i for i in badsampleIDs if i in df.index.droplevel(0)]
-        dfclean = df.drop(drop, level=1)
+        drop = [i for i in badsampleIDs if i in dfdrop.index.droplevel(0)]
+        dfdrop = dfdrop.drop(drop, level=1)
     except AttributeError:
-        [df.drop(i, inplace=True) for i in badsampleIDs if i in df.index]
-        dfclean = df
-    return dfclean
+        [dfdrop.drop(i, inplace=True) for i in badsampleIDs if i in dfdrop.index]
+    return dfdrop
 
 
 def drop_poscons(df, posconIDs):
@@ -384,9 +383,9 @@ def analyse(capture, serie, docfile=None, sample=None,
 
     serie_samples = get_samples_for_serie(df, serie)
     badsamples_archive = [_ for _ in badsamples if _ not in serie_samples]
+
     df = drop_badsamples(df, badsamples_archive)
     df.index = df.index.droplevel(0)
-
     df_poscons = df.reindex(poscon_ids)
 
     try:
@@ -395,9 +394,9 @@ def analyse(capture, serie, docfile=None, sample=None,
         df_poscons = pd.DataFrame()
         print(e)
 
-    df_clean = drop_badsamples(df, badsamples)
+    df_clean = df.copy()
+    df_clean = drop_badsamples(df_clean, badsamples)
     df_clean = df_clean.transpose()
-
     df = df.transpose()
     df_poscons = df_poscons.transpose()
 
@@ -433,7 +432,7 @@ def analyse(capture, serie, docfile=None, sample=None,
 
     for i, sample in enumerate(serie_samples):
         samples_to_drop = [_ for _ in badsamples if _ != sample]
-        df_temp = drop_badsamples(df.transpose(), samples_to_drop)
+        df_temp = drop_badsamples(df, samples_to_drop)
         df_norm = normalize_df(df_temp).transpose()
         sampleplotdf = target_mean.join(df_norm.join(df_annot))
         SaPlotter = SamplePlots(sample, newdir, badsamples=badsamples)
