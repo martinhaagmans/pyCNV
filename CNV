@@ -32,12 +32,13 @@ if __name__ == '__main__':
                         help='Lijst met gennamen voor rapportage')
     parser.add_argument('-p', '--poscontroles', type=str, metavar='',
                         help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
-
+    parser.add_argument('--configfile', type=str, metavar='',
+                        help='File met locaties voor databases en output')
     args = parser.parse_args()
 
     if args.create:
-        pycnv.create_database(args)
+        pycnv.create_database(args, configfile=args.configfile)
     elif args.analyse:
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, reportgenes=args.genelist,
-                      addonly=args.addonly)
+                      addonly=args.addonly, configfile=args.configfile)

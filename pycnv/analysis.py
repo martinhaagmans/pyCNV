@@ -132,9 +132,9 @@ def percentage_callable(df, badregions):
     return (badregions['size'].sum() / df['size'].sum())
 
 
-def create_database(args):
+def create_database(args, configfile=None):
     if args.poscontroles or args.ingestuurd:
-        DB = Databases('')
+        DB = Databases('', configfile=configfile)
         if args.poscontroles:
             DB.add_poscontrols(args.poscontroles)
             sys.exit()
@@ -145,13 +145,15 @@ def create_database(args):
         create_capture_database(args.capture)
 
 
-def create_capture_database(capture):
+def create_capture_database(capture, configfile=None):
     """Create 1 database with 2 tables:
      - DoC table for coverage data
      - Annotation table with gene-target info.
      """
-    configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                              'config.py')
+    if configfile is None:
+        configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'config.py')
+
     config = get_config_dict(configfile)
     annotbed = get_annot_bedlocation(capture,
                                      pipelinedir=config['pipelinedir'])
@@ -242,18 +244,7 @@ def seperate_data(df, new, sample=None, keepseries=False):
     Return 2 dataframes.
     """
     if sample is not None:
-        # df.index = df.index.droplevel(level=0)
         df_new = df.loc[(new, sample)]
-
-        # print (df.index)
-        # sys.exit(0)
-
-        # try:
-        #     df_new = df_new.loc[sample]
-        # except KeyError:
-        #     print('Requested sample not in serie.')
-        #     raise
-        # else:
         df.drop([sample], level=1, inplace=True)
     else:
         df_new = df.loc[new]
@@ -356,8 +347,8 @@ def write_excluded_file(newdir, badregions, empiricalfragments, perc_callable):
             f.write('Geen.')
 
 
-def analyse(capture, serie, docfile=None, sample=None,
-            outdir=None, reportgenes=None, addonly=False):
+def analyse(capture, serie, docfile=None, sample=None, outdir=None, 
+            reportgenes=None, addonly=False, configfile=None):
     if docfile:
         add_docfile(docfile, capture, serie, sample)
         if addonly:
