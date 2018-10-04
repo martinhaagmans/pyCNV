@@ -28,16 +28,14 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--genelist', type=str, metavar='', nargs='*',
                         help='List with genenames to rapport')
     parser.add_argument('-p', '--poscontroles', type=str, metavar='',
-                        help='File with positive controls')
+                        help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
+    parser.add_argument('--configfile', type=str, metavar='',
+                        help='File met locaties voor databases en output')
     args = parser.parse_args()
 
     if args.create:
-        pycnv.create_database(args)
-    else:
-        if not args.capture:
-            raise ValueError('Geen capture opgegeven')
-        elif not args.serie and not args.sample:
-            raise ValueError('Geen serie of sample opgegeven')
+        pycnv.create_database(args, configfile=args.configfile)
+    elif args.analyse:
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, reportgenes=args.genelist,
-                      addonly=args.addonly)
+                      addonly=args.addonly, configfile=args.configfile)
