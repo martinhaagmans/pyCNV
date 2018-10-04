@@ -35,7 +35,13 @@ if __name__ == '__main__':
 
     if args.create:
         pycnv.create_database(args, configfile=args.configfile)
-    elif args.analyse:
+    else:
+        if not args.capture:
+            raise ValueError('Geen capture opgegeven')
+        elif not args.serie and not args.sample:
+            raise ValueError('Geen serie of sample opgegeven')
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, reportgenes=args.genelist,
                       addonly=args.addonly, configfile=args.configfile)
+
+
