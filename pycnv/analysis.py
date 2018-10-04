@@ -112,7 +112,6 @@ def correct_males(df, cutoff=0.85):
 
 def get_bad_regions(df, meancutoff=0.2, stdcutoff=0.15):
     """Define less/non callable regions by mean and std. Return dataframe."""
-    targetmean, targetstd = get_target_info(df)
     excluded_std = df[df['Std'] >= stdcutoff]['Std']
     excluded_mean = df[df['Mean'] <= meancutoff]['Mean']
     excluded_regions = pd.concat([excluded_mean, excluded_std],
@@ -438,7 +437,7 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
 
             calls = calls.transpose()
             calls = df_annot.join(calls, how='right')
-            genes = calls['gen'].unique()
+            genes = calls['gen'].dropna().unique()
             calls = calls[[sample, 'gen']].join(pd.DataFrame.from_dict(
                 calls_per_target, orient='index')
                 ).join(badregions[['Mean', 'Std']]).fillna('OK')
@@ -450,10 +449,20 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
             for gene in genes:
                 if reportgenes is not None and gene not in reportgenes:
                     continue
-
-                intervalstoplot = get_intervals_for_gene(df_annot, gene)
+                elif gene == 'nan':
+                    continue
+                try:
+                    intervalstoplot = get_intervals_for_gene(df_annot, gene)
+                except ValueError as e:
+                    print(e, gene)
+                    continue
                 datatoplot = filter_data_by_intervals(df_zscores, intervalstoplot)
-                datatoplot = sort_by_interval(datatoplot.copy())
+                try:
+                    datatoplot = sort_by_interval(datatoplot.copy())
+                except ValueError as e:
+                    print(e, gene)
+                    continue
+
                 targetinfo_toplot = filter_data_by_intervals(target_info,
                                                              intervalstoplot)
                 targetinfo_toplot = sort_by_interval(targetinfo_toplot.copy())
