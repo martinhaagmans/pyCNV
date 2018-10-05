@@ -11,7 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('--create', action='store_true',
                         help='Create new database')
     parser.add_argument('-c', '--capture', type=str, metavar='.',
-                        help='Capturecode with versionnumber e.g. CMv18')
+                        help='Capturecode with version e.g. CMv18')
     parser.add_argument('-n', '--nieuw', type=str, metavar='',
                         help="GATK's DoC sample_interval_summary file")
     parser.add_argument('-s', '--serie', type=str, metavar='',

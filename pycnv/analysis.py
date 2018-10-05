@@ -141,7 +141,7 @@ def create_database(args, configfile=None):
             DB.add_badsamples(args.ingestuurd)
             sys.exit()
     if args.capture:
-        create_capture_database(args.capture)
+        create_capture_database(args.capture, configfile=configfile)
 
 
 def create_capture_database(capture, configfile=None):
