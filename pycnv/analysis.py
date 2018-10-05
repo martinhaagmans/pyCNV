@@ -294,8 +294,6 @@ def get_gene_list_from_file(genefile):
 
 
 def serie_qc(capture, serie, outdir, poscons, badsamples):
-    QD = Databases(capture)
-
     df = collect_archive(capture, correctmales=True)
     df = drop_badsamples(df, badsamples)
 
@@ -369,7 +367,7 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
     elif outdir:
         newdir = create_dirs(outdir, capture, serie, outdir)
 
-    serie_qc(capture, serie, outdir, poscon_ids, badsamples)
+    serie_qc(capture, serie, newdir, poscon_ids, badsamples)
 
     serie_samples = get_samples_for_serie(df, serie)
     badsamples_archive = [_ for _ in badsamples if _ not in serie_samples]
