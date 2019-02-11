@@ -94,8 +94,8 @@ class SamplePlots(object):
         axmax = math.ceil(max(axmax))
         axmin = math.floor(min(axmin))
 
-        if axmax < 3:
-            axmax = 3
+        if axmax < 2:
+            axmax = 2
         if axmin > -1:
             axmin = -1
 
