@@ -9,16 +9,16 @@ from .databases import Databases
 from .plots import SeriePlots
 from .plots import SamplePlots
 
+SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
 
-def doc_to_df(docfile):
-    """Read GATK's DoC file and return a df."""
-    df = pd.read_csv(docfile, index_col=0, sep='\t')
-    df = df.filter(regex='_mean_cvg')
-    df.columns = [col.split("_")[0] for col in df]
-    df.index = underscore_targets(df.index)
-    df = df.transpose()
-    df.sort_index(inplace=True)
-    return df
+
+def get_annot_bedlocation(capture, pipelinedir=None):
+    """Find annotated BEDfile in pipeline home. Return a filelocation."""
+    bed_annot = os.path.join(pipelinedir, 'captures',
+                             '{}_target.annotated'.format(capture))
+    if not os.path.isfile(bed_annot):
+        raise IOError('{} does not exist.'.format(bed_annot))
+    return bed_annot
 
 
 def annotbed_to_df(bedfile):
@@ -43,6 +43,22 @@ def annotbed_to_df(bedfile):
                  inplace=True, axis=1)
     dfannot.sort_index(inplace=True)
     return dfannot
+
+
+def create_capture_database(capture, configfile=None):
+    """Create 1 database with 2 tables:
+     - DoC table for coverage data
+     - Annotation table with gene-target info.
+     """
+    if configfile is None:
+        configfile = os.path.join(SCRIPTDIR, 'config.py')
+    config = get_config_dict(configfile)
+    annotbed = get_annot_bedlocation(capture, pipelinedir=config['pipelinedir'])
+    dfannot = annotbed_to_df(annotbed)
+    DB = Databases(capture)
+    DB.create_annot_table(dfannot)
+    DB.create_doc_table()
+    return
 
 
 def underscore_targets(targets):
@@ -144,31 +160,6 @@ def create_database(args, configfile=None):
         create_capture_database(args.capture, configfile=configfile)
 
 
-def create_capture_database(capture, configfile=None):
-    """Create 1 database with 2 tables:
-     - DoC table for coverage data
-     - Annotation table with gene-target info.
-     """
-    if configfile is None:
-        configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  'config.py')
-
-    config = get_config_dict(configfile)
-    annotbed = get_annot_bedlocation(capture,
-                                     pipelinedir=config['pipelinedir'])
-    dfannot = annotbed_to_df(annotbed)
-    DB = Databases(capture)
-    DB.create_annot_table(dfannot)
-    DB.create_doc_table(dfannot)
-
-
-def get_annot_bedlocation(capture, pipelinedir=None):
-    """Find annotated BEDfile in pipeline home. Return a filelocation."""
-    bed_annot = os.path.join(pipelinedir, 'captures',
-                             '{}_target.annotated'.format(capture))
-    if not os.path.isfile(bed_annot):
-        raise IOError('{} does not exist.'.format(bed_annot))
-    return bed_annot
 
 
 def add_docfile(docfile, capture, serie, sample):
@@ -211,14 +202,6 @@ def get_poscondata(df, posconsamples):
     return df_poscon
 
 
-def collect_archive(capture, correctmales=False):
-    """Call Database class. Return dataframe"""
-    archive = Databases(capture).get_archive()
-    if correctmales:
-        archive = correct_males(archive)
-    return archive
-
-
 def clean_archive(archive, capture, keepseries=False, getposcondf=False):
     QD = Databases(capture)
     pcsamples = QD.get_positive_controls()
@@ -226,7 +209,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
     if badsamples:
         archive = drop_badsamples(archive, badsamples)
     if pcsamples:
-        df_poscons = get_poscondata(archive, pcsamples, keepseries=keepseries)
+        df_poscons = get_poscondata(archive, pcsamples)
         [archive.drop(_, axis=1, inplace=True) for _ in pcsamples if _ in archive.columns]
     else:
         df_poscons = pd.DataFrame()
@@ -238,7 +221,7 @@ def clean_archive(archive, capture, keepseries=False, getposcondf=False):
         return archive
 
 
-def seperate_data(df, new, sample=None, keepseries=False):
+def seperate_data(df, new, sample=None):
     """Seperate dataframe in archive and to be analyzed (new) data.
     Return 2 dataframes.
     """
@@ -293,10 +276,11 @@ def get_gene_list_from_file(genefile):
         return [line.strip() for line in f]
 
 
-def serie_qc(capture, serie, outdir, poscons, badsamples):
+def serie_qc(df, capture, serie, outdir, poscons, badsamples):
     df = collect_archive(capture, correctmales=True)
-    df = drop_badsamples(df, badsamples)
 
+
+    df = drop_badsamples(df, badsamples)
     df_new, df_archive = seperate_data(df, serie)
     df_archive = drop_poscons(df_archive, poscons)
     archive_nr_of_samples = len(df_archive.index)
@@ -345,29 +329,36 @@ def write_excluded_file(newdir, badregions, empiricalfragments, perc_callable):
 
 
 def analyse(capture, serie, docfile=None, sample=None, outdir=None, 
-            reportgenes=None, addonly=False, configfile=None):
+            reportgenes=None, addonly=False, configfile=None, delete=False):
     if docfile:
         add_docfile(docfile, capture, serie, sample)
         if addonly:
             sys.exit()
+    
+    config = get_config_dict(os.path.join(SCRIPTDIR, 'config.py'))
 
-    df = collect_archive(capture, correctmales=True)
     QD = Databases(capture)
+
+    if delete:
+        QD.delete_serie(serie)
+        sys.exit()
+
+    df = QD.get_archive()
+    df = correct_males(df)
+    
     poscon_dict = QD.get_positive_controls_dict()
     poscon_ids = list(poscon_dict.keys())
     badsamples = QD.get_bad_samples()
     df_annot = QD.get_annot()
     empiricalfragments = QD.get_regions_to_exclude()
-    config = get_config_dict('{}/config.py'.format(
-        os.path.dirname(os.path.abspath(__file__))))
-
+    
     if not outdir:
         outdir = config['outputdir']
         newdir = create_dirs(None, capture, serie, outdir)
     elif outdir:
         newdir = create_dirs(outdir, capture, serie, outdir)
 
-    serie_qc(capture, serie, newdir, poscon_ids, badsamples)
+    serie_qc(df, capture, serie, newdir, poscon_ids, badsamples)
 
     serie_samples = get_samples_for_serie(df, serie)
     badsamples_archive = [_ for _ in badsamples if _ not in serie_samples]

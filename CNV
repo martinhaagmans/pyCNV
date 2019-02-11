@@ -1,47 +1,51 @@
 #!/usr/bin/env python
 import argparse
-
 import pycnv
 
 
 if __name__ == '__main__':
 
+    def chek_args(args):
+        if not args.capture:
+            raise ValueError('Geen capture opgegeven')
+        elif not args.serie and not args.sample:
+            raise ValueError('Geen serie of sample opgegeven')
+
     parser = argparse.ArgumentParser(description="Copy Number Variant detector for diagnostic NGS-pipeline")
 
     parser.add_argument('--create', action='store_true',
                         help='Create new database')
-    parser.add_argument('-c', '--capture', type=str, metavar='.',
+    parser.add_argument('-c', '--capture', type=str, 
                         help='Capturecode with version e.g. CMv18')
-    parser.add_argument('-n', '--nieuw', type=str, metavar='',
+    parser.add_argument('-n', '--nieuw', type=str, 
                         help="GATK's DoC sample_interval_summary file")
-    parser.add_argument('-s', '--serie', type=str, metavar='',
+    parser.add_argument('-s', '--serie', type=str, 
                         help='Serienumber e.g. 450')
-    parser.add_argument('-o', '--output', type=str, metavar='',
+    parser.add_argument('-o', '--output', type=str,
                         help='Output directory')
-    parser.add_argument('--sample', type=str, metavar='', help='SampleID')
+    parser.add_argument('--sample', type=str, help='SampleID')
     parser.add_argument('--addonly', action='store_true',
                         help='Only add DoC to database')
-    parser.add_argument('-i', '--ingestuurd', type=str, metavar='',
+    parser.add_argument('-i', '--ingestuurd', type=str,
                         help='File with samples to be excluded')
-    parser.add_argument('-b', '--bed', type=str, metavar='',
+    parser.add_argument('-b', '--bed', type=str,
                         help='Annotated target BED-file')
-    parser.add_argument('-g', '--genelist', type=str, metavar='', nargs='*',
+    parser.add_argument('-g', '--genelist', type=str, nargs='*',
                         help='List with genenames to rapport')
-    parser.add_argument('-p', '--poscontroles', type=str, metavar='',
+    parser.add_argument('-p', '--poscontroles', type=str,
                         help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
-    parser.add_argument('--configfile', type=str, metavar='',
+    parser.add_argument('--configfile', type=str,
                         help='File met locaties voor databases en output')
+    parser.add_argument('--delete', type=str,
+                        help='Delete serie uit database')                        
     args = parser.parse_args()
 
     if args.create:
         pycnv.create_database(args, configfile=args.configfile)
     else:
-        if not args.capture:
-            raise ValueError('Geen capture opgegeven')
-        elif not args.serie and not args.sample:
-            raise ValueError('Geen serie of sample opgegeven')
+        chek_args(args)
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, reportgenes=args.genelist,
-                      addonly=args.addonly, configfile=args.configfile)
+                      addonly=args.addonly, configfile=args.configfile, delete=args.delete)
 
 
