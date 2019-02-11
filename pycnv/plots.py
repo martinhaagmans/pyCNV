@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 sns.set_style('darkgrid')
 
-
 class SeriePlots(object):
     """Create QC plot per serie."""
 
