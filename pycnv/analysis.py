@@ -160,8 +160,6 @@ def create_database(args, configfile=None):
         create_capture_database(args.capture, configfile=configfile)
 
 
-
-
 def add_docfile(docfile, capture, serie, sample):
     D = Databases(capture)
     data = D.parse_docfile(docfile)
@@ -277,9 +275,6 @@ def get_gene_list_from_file(genefile):
 
 
 def serie_qc(df, capture, serie, outdir, poscons, badsamples):
-    df = collect_archive(capture, correctmales=True)
-
-
     df = drop_badsamples(df, badsamples)
     df_new, df_archive = seperate_data(df, serie)
     df_archive = drop_poscons(df_archive, poscons)
@@ -328,13 +323,13 @@ def write_excluded_file(newdir, badregions, empiricalfragments, perc_callable):
             f.write('Geen.')
 
 
-def analyse(capture, serie, docfile=None, sample=None, outdir=None, 
+def analyse(capture, serie, docfile=None, sample=None, outdir=None,
             reportgenes=None, addonly=False, configfile=None, delete=False):
     if docfile:
         add_docfile(docfile, capture, serie, sample)
         if addonly:
             sys.exit()
-    
+
     config = get_config_dict(os.path.join(SCRIPTDIR, 'config.py'))
 
     QD = Databases(capture)
@@ -345,13 +340,13 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
 
     df = QD.get_archive()
     df = correct_males(df)
-    
+
     poscon_dict = QD.get_positive_controls_dict()
     poscon_ids = list(poscon_dict.keys())
     badsamples = QD.get_bad_samples()
     df_annot = QD.get_annot()
     empiricalfragments = QD.get_regions_to_exclude()
-    
+
     if not outdir:
         outdir = config['outputdir']
         newdir = create_dirs(None, capture, serie, outdir)
@@ -371,7 +366,6 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
         df.drop(poscon_ids, inplace=True)
     except KeyError as e:
         df_poscons = pd.DataFrame()
-        print(e)
 
     df_clean = df.copy()
     df_clean = drop_badsamples(df_clean, badsamples)

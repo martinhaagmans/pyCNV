@@ -12,14 +12,13 @@ if __name__ == '__main__':
             raise ValueError('Geen serie of sample opgegeven')
 
     parser = argparse.ArgumentParser(description="Copy Number Variant detector for diagnostic NGS-pipeline")
-
     parser.add_argument('--create', action='store_true',
                         help='Create new database')
-    parser.add_argument('-c', '--capture', type=str, 
+    parser.add_argument('-c', '--capture', type=str,
                         help='Capturecode with version e.g. CMv18')
-    parser.add_argument('-n', '--nieuw', type=str, 
+    parser.add_argument('-n', '--nieuw', type=str,
                         help="GATK's DoC sample_interval_summary file")
-    parser.add_argument('-s', '--serie', type=str, 
+    parser.add_argument('-s', '--serie', type=str,
                         help='Serienumber e.g. 450')
     parser.add_argument('-o', '--output', type=str,
                         help='Output directory')
@@ -36,8 +35,8 @@ if __name__ == '__main__':
                         help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
     parser.add_argument('--configfile', type=str,
                         help='File met locaties voor databases en output')
-    parser.add_argument('--delete', type=str,
-                        help='Delete serie uit database')                        
+    parser.add_argument('--delete', action='store_true',
+                        help='Delete serie uit database')
     args = parser.parse_args()
 
     if args.create:
@@ -47,5 +46,3 @@ if __name__ == '__main__':
         pycnv.analyse(capture=args.capture, serie=args.serie, docfile=args.nieuw,
                       sample=args.sample, outdir=args.output, reportgenes=args.genelist,
                       addonly=args.addonly, configfile=args.configfile, delete=args.delete)
-
-
