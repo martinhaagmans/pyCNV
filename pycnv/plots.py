@@ -25,8 +25,8 @@ class SeriePlots(object):
                   size=20)
 
         ax.scatter(df_arch['Mean'], df_new['Mean'], label=self.serie)
-        ax.set_xlim([-0.5, 3.5])
-        ax.set_ylim([-0.5, 3.5])
+        ax.set_xlim([0, 3.5])
+        ax.set_ylim([0, 3.5])
         ax.set_title('Gemiddelde genormaliseerde coverage per target',
                      size=20)
         if nrarchive is not None:
@@ -96,8 +96,8 @@ class SamplePlots(object):
 
         if axmax < 2:
             axmax = 2
-        if axmin > -1:
-            axmin = -1
+        if axmin > 0:
+            axmin = 0
 
         ax.set_xlim([axmin, axmax])
         ax.set_ylim([axmin, axmax])
