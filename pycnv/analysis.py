@@ -179,10 +179,11 @@ def drop_badsamples(dfdrop, badsampleIDs):
 def drop_poscons(df, posconIDs):
     try:
         drop = [i for i in posconIDs if i in df.index.droplevel(0)]
-        dfclean = df.drop(drop, level=1)
-    except AttributeError:
+    except (AttributeError, ValueError):
         [df.drop(i, inplace=True) for i in posconIDs if i in df.index]
         dfclean = df
+    else:
+        dfclean = df.drop(drop, level=1)
     return dfclean
 
 
