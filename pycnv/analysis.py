@@ -169,9 +169,10 @@ def add_docfile(docfile, capture, serie, sample):
 def drop_badsamples(dfdrop, badsampleIDs):
     try:
         drop = [i for i in badsampleIDs if i in dfdrop.index.droplevel(0)]
-        dfdrop = dfdrop.drop(drop, level=1)
-    except AttributeError:
+    except (AttributeError, ValueError):
         [dfdrop.drop(i, inplace=True) for i in badsampleIDs if i in dfdrop.index]
+    else:
+        dfdrop = dfdrop.drop(drop, level=1)
     return dfdrop
 
 
