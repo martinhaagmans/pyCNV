@@ -32,11 +32,11 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--genelist', type=str, nargs='*',
                         help='List with genenames to rapport')
     parser.add_argument('-p', '--poscontroles', type=str,
-                        help='TSV File met positieve controles: Capture Gen SampleID Dup/Del')
+                        help='File with positive controls: Capture Gen SampleID Dup/Del')
     parser.add_argument('--configfile', type=str,
-                        help='File met locaties voor databases en output')
+                        help='File with databases and output location')
     parser.add_argument('--delete', action='store_true',
-                        help='Delete serie uit database')
+                        help='Delete serie from database')
     args = parser.parse_args()
 
     if args.create:
