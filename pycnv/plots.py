@@ -110,7 +110,7 @@ class SamplePlots(object):
             plt.title(self.sample, size=15)
         fig.tight_layout()
         plt.savefig('{}/QC/{}.png'.format(self.outdir, self.sample),
-                    sample_qcdpi=80)
+                    dpi=80)
         plt.close()
 
     def plot_cnv_calls(self, data, gene, pdf, targetinfo, serie, poscons=None):
