@@ -108,11 +108,13 @@ def get_zscore_df(df):
     return zscore.round(1)
 
 
-def correct_males(df, patientinfo_db, cutoff=0.85):
+def correct_males(df, patientinfo_db, newdir, cutoff=0.85):
     """Calculate ratio X-chromosome coverage and Autosomal coverage and
     double the coverage on the X-chromosome if ratio < cutoff.
     Return a corrected dataframe
     """
+    sex_report = '{}/geschat_geslacht.txt'.format(newdir)
+
     df = df.transpose()
     if not df.index.str.contains('^chrX', regex=True, na=False).any():
         return df.transpose()
@@ -131,9 +133,15 @@ def correct_males(df, patientinfo_db, cutoff=0.85):
             sex_unknown.append(col)
         elif S.sample_is_male(serie, sample):
             males.append(col)
-    for col in sex_unknown:
-        if (sex[sex[col] > 100][col].mean() / auto[auto[col] > 100][col].mean()) < cutoff:
-            males.append(col)
+    with open(sex_report, 'w') as f:      
+        for col in sex_unknown:
+            serie, sample = col
+            f.write('{}\t'.format(sample))
+            if (sex[sex[col] > 100][col].mean() / auto[auto[col] > 100][col].mean()) < cutoff:
+                males.append(col)
+                f.write('M\n')
+            else:
+                f.write('V\n')
 
     for col in males:
         new = 2 * df[df.index.str.contains('^chrX', regex=True,
@@ -331,15 +339,20 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
             sys.exit()
 
     config = get_config_dict(os.path.join(SCRIPTDIR, 'config.py'))
-
-    QD = Databases(capture)
-
+    
     if delete:
-        QD.delete_serie(serie)
+        Databases(capture).delete_serie(serie)
         sys.exit()
-
+    
+    if not outdir:
+        outdir = config['outputdir']
+        newdir = create_dirs(None, capture, serie, outdir)
+    elif outdir:
+        newdir = create_dirs(outdir, capture, serie, outdir)    
+    
+    QD = Databases(capture)
     df = QD.get_archive()
-    df = correct_males(df, config['patientinfo'])
+    df = correct_males(df, config['patientinfo'], newdir)
 
     poscon_dict = QD.get_positive_controls_dict()
     poscon_ids = list(poscon_dict.keys())
@@ -347,11 +360,7 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
     df_annot = QD.get_annot()
     empiricalfragments = QD.get_regions_to_exclude()
 
-    if not outdir:
-        outdir = config['outputdir']
-        newdir = create_dirs(None, capture, serie, outdir)
-    elif outdir:
-        newdir = create_dirs(outdir, capture, serie, outdir)
+
 
     serie_qc(df, capture, serie, newdir, poscon_ids, badsamples)
 
