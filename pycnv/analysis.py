@@ -5,9 +5,11 @@ import sys
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
-from .databases import Databases
+from ngsscriptlibrary import SexForCNV
+
 from .plots import SeriePlots
 from .plots import SamplePlots
+from .databases import Databases
 
 SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -106,23 +108,38 @@ def get_zscore_df(df):
     return zscore.round(1)
 
 
-def correct_males(df, cutoff=0.85):
+def correct_males(df, patientinfo_db, cutoff=0.85):
     """Calculate ratio X-chromosome coverage and Autosomal coverage and
     double the coverage on the X-chromosome if ratio < cutoff.
     Return a corrected dataframe
     """
     df = df.transpose()
+    if not df.index.str.contains('^chrX', regex=True, na=False).any():
+        return df.transpose()
+
+    sex_unknown = list()
+    males = list()
+    
+    S = SexForCNV(patientinfo_db)
+
     sex = df[df.index.str.contains('^chrX', regex=True, na=False)]
     auto = df[~df.index.str.contains('^chrX', regex=True, na=False)]
-    males = [x for x in df.columns
-             if (sex[sex[x] > 100][x].mean()
-                 / auto[auto[x] > 100][x].mean()) < cutoff]
 
-    for p in males:
+    for col in df.columns:
+        serie, sample = col
+        if not S.sample_in_db(serie, sample):
+            sex_unknown.append(col)
+        elif S.sample_is_male(serie, sample):
+            males.append(col)
+    for col in sex_unknown:
+        if (sex[sex[col] > 100][col].mean() / auto[auto[col] > 100][col].mean()) < cutoff:
+            males.append(serie, sample)
+
+    for col in males:
         new = 2 * df[df.index.str.contains('^chrX', regex=True,
-                                           na=False)][p].values
+                                           na=False)][col].values
 
-        df.at[df.index.str.contains('^chrX', regex=True, na=False), p] = new
+        df.at[df.index.str.contains('^chrX', regex=True, na=False), col] = new
     return df.transpose()
 
 
@@ -200,25 +217,6 @@ def get_poscondata(df, posconsamples):
         return pd.DataFrame()
 
     return df_poscon
-
-
-def clean_archive(archive, capture, keepseries=False, getposcondf=False):
-    QD = Databases(capture)
-    pcsamples = QD.get_positive_controls()
-    badsamples = QD.get_bad_samples()
-    if badsamples:
-        archive = drop_badsamples(archive, badsamples)
-    if pcsamples:
-        df_poscons = get_poscondata(archive, pcsamples)
-        [archive.drop(_, axis=1, inplace=True) for _ in pcsamples if _ in archive.columns]
-    else:
-        df_poscons = pd.DataFrame()
-    if not keepseries:
-        archive.index = archive.index.droplevel(0)
-    if getposcondf:
-        return (archive, df_poscons)
-    else:
-        return archive
 
 
 def seperate_data(df, new, sample=None):
@@ -341,7 +339,7 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
         sys.exit()
 
     df = QD.get_archive()
-    df = correct_males(df)
+    df = correct_males(df, config['patientinfo'])
 
     poscon_dict = QD.get_positive_controls_dict()
     poscon_ids = list(poscon_dict.keys())
