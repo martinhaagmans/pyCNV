@@ -129,10 +129,19 @@ def correct_males(df, patientinfo_db, newdir, cutoff=0.85):
 
     for col in df.columns:
         serie, sample = col
+
         if not S.sample_in_db(serie, sample):
             sex_unknown.append(col)
-        elif S.sample_is_male(serie, sample):
+            continue
+        try:
+            is_male = S.sample_is_male(serie, sample)
+        except ValueError:
+            sex_unknown.append(col)
+            continue
+
+        if is_male:
             males.append(col)
+
     with open(sex_report, 'w') as f:      
         for col in sex_unknown:
             serie, sample = col
