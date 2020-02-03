@@ -128,6 +128,7 @@ def correct_males(df, patientinfo_db, newdir, cutoff=0.85):
     auto = df[~df.index.str.contains('^chrX', regex=True, na=False)]
 
     for col in df.columns:
+        is_male = None
         serie, sample = col
 
         if not S.sample_in_db(serie, sample):
