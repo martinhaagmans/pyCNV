@@ -149,9 +149,9 @@ def correct_males(df, patientinfo_db, newdir, cutoff=0.85):
             f.write('{}\t'.format(sample))
             if (sex[sex[col] > 100][col].mean() / auto[auto[col] > 100][col].mean()) < cutoff:
                 males.append(col)
-                f.write('M\n')
+                f.write('Man\n')
             else:
-                f.write('V\n')
+                f.write('Vrouw\n')
 
     for col in males:
         new = 2 * df[df.index.str.contains('^chrX', regex=True,
