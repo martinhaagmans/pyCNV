@@ -348,7 +348,9 @@ def analyse(capture, serie, docfile=None, sample=None, outdir=None,
         if addonly:
             sys.exit()
 
-    config = get_config_dict(os.path.join(SCRIPTDIR, 'config.py'))
+    if configfile is None:
+        configfile = os.path.join(SCRIPTDIR, 'config.py')
+    config = get_config_dict(configfile)
     
     if delete:
         Databases(capture).delete_serie(serie)
