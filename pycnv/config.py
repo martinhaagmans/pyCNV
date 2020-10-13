@@ -1,12 +1,15 @@
 import os
 
-HOME = os.path.expanduser('~')
+HOME = '/data/dnadiag'
 
-dbdir = os.path.join(HOME, 'Documents', 'cnv', 'databases')
-outputdir = os.path.join(HOME, 'Documents', 'cnv', 'output')
-pipelinedir = os.path.join(HOME, 'Documents', 'ngstargets')
+dbdir = os.path.join(HOME,  'databases', 'cnv')
+outputdir = os.path.join(HOME,  'cnvoutput')
+pipelinedir = os.path.join(HOME, 'ngstargets')
+
+patientinfo = os.path.join(HOME,  'databases', 'patientinfo.sqlite')
 
 dbgeneral = 'general.sqlite'
 poscontable = 'poscontrols'
 badsampletable = 'badsamples'
 badregiontable = 'toexclude'
+
